@@ -43,10 +43,21 @@ function renderCard(col) {
       </div>`;
   }
 
-  const s = col.sentiment || { label: "Neutral", emoji: "➖", text: "" };
+  const s = col.sentiment || { label: "Neutral", emoji: "➖", text: "", bullets: [] };
   const staleNote = col.stale
     ? `<div class="stale-note">⚠ Showing cached data — last refresh failed (${esc(col.error || "")}).</div>`
     : "";
+
+  const polarityMark = { pos: "+", neg: "–", mixed: "~" };
+  const bullets = s.bullets || [];
+  const summaryHtml = bullets.length
+    ? `<ul class="summary">${bullets
+        .map(
+          (b) =>
+            `<li class="b-${esc(b.polarity)}"><span class="mark">${polarityMark[b.polarity] || "•"}</span>${esc(b.text)}</li>`
+        )
+        .join("")}</ul>`
+    : `<p class="sentiment-text">${esc(s.text)}</p>`;
 
   const resultsHtml = (col.results || []).map(renderResult).join("");
   const sourcesHtml = (col.sources || [])
@@ -59,7 +70,8 @@ function renderCard(col) {
         <h2>${esc(col.name)}</h2>
         <span class="badge ${esc(s.label)}">${s.emoji} ${esc(s.label)}</span>
       </div>
-      <p class="sentiment-text">${esc(s.text)}</p>
+      <div class="summary-label">Top sentiments</div>
+      ${summaryHtml}
       <div class="sources">${sourcesHtml}</div>
       ${staleNote}
       <ul class="results">${resultsHtml || '<li class="skeleton">No results returned.</li>'}</ul>

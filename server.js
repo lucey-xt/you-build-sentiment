@@ -86,6 +86,12 @@ function termMatches(text, term) {
   return new RegExp(`\\b${t}\\b`).test(text); // single word -> word boundary
 }
 
+// Match terms for every *other* tracked product — used to filter out opinions
+// that are really about a competitor.
+function otherMatchTerms(id) {
+  return COMPETITORS.filter((c) => c.id !== id).flatMap((c) => c.match);
+}
+
 // True when one of the product's `match` terms appears anywhere in the result
 // (title, ANY snippet, or URL). Reddit snippets often lead with vote-count
 // metadata, so the mention may sit in a later snippet than the displayed one.
@@ -121,13 +127,23 @@ const NEGATIVE = [
   "deprecated","inaccurate","hallucinate","problem","issue","concern",
 ];
 
+const NEGATORS = new Set([
+  "not","no","never","without","hardly","barely","nor","cant","cannot",
+  "dont","doesnt","isnt","wasnt","arent","wont","didnt",
+]);
+
 function scoreText(text) {
   const words = (text || "").toLowerCase().match(/[a-z']+/g) || [];
   let pos = 0;
   let neg = 0;
-  for (const w of words) {
-    if (POSITIVE.includes(w)) pos++;
-    if (NEGATIVE.includes(w)) neg++;
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i];
+    // A negator within the previous 3 words flips the polarity ("not great").
+    const negated = words
+      .slice(Math.max(0, i - 3), i)
+      .some((x) => NEGATORS.has(x) || x.endsWith("n't"));
+    if (POSITIVE.includes(w)) negated ? neg++ : pos++;
+    else if (NEGATIVE.includes(w)) negated ? pos++ : neg++;
   }
   return { pos, neg };
 }
@@ -167,6 +183,56 @@ function summarizeSentiment(results) {
         ? "No strong sentiment signals in the latest results."
         : `${label} lean across recent developer discussion (${pos} positive / ${neg} negative signal words).`,
   };
+}
+
+// Pull the most representative opinions out of the matched discussion: split
+// snippets into sentences, keep the ones carrying sentiment, dedupe, and return
+// the strongest few as bullet points with a polarity marker.
+function topSentiments(results, ownTerms, otherTerms, n = 3) {
+  const seen = new Set();
+  const candidates = [];
+
+  for (const r of results) {
+    const text = r.matchText || r.snippet || "";
+    const sentences = text.split(/(?<=[.!?])\s+|\s*\|\|\s*/);
+    for (const raw of sentences) {
+      const s = raw.replace(/\s+/g, " ").trim();
+      if (s.length < 25 || s.length > 200) continue;
+      if (/^posted by\b|^\d+\s+votes?\b/i.test(s)) continue; // skip reddit metadata
+      if (/[{}\[\]]|":|=>|\bnpx\b|\bargs\b/i.test(s)) continue; // skip code/config
+      const letters = (s.match(/[a-z]/gi) || []).length;
+      if (letters / s.length < 0.6) continue; // skip non-prose (URLs, snippets)
+
+      const low = s.toLowerCase();
+      const mentionsOwn = ownTerms.some((t) => termMatches(low, t));
+      const mentionsOther = otherTerms.some((t) => termMatches(low, t));
+      // Skip opinions clearly about a competitor and not this product.
+      if (mentionsOther && !mentionsOwn) continue;
+
+      const { pos, neg } = scoreText(s);
+      const weight = pos + neg;
+      if (weight === 0) continue; // must carry sentiment
+
+      const key = low.replace(/[^a-z0-9]/g, "").slice(0, 50);
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      const polarity = pos > neg ? "pos" : neg > pos ? "neg" : "mixed";
+      // Rank sentences that explicitly name this product ahead of generic ones.
+      candidates.push({ text: trimTo(s, 140), weight: weight + (mentionsOwn ? 3 : 0), polarity });
+    }
+  }
+
+  candidates.sort((a, b) => b.weight - a.weight);
+  return candidates.slice(0, n).map(({ text, polarity }) => ({ text, polarity }));
+}
+
+// Trim to a length, cutting on a word boundary and adding an ellipsis.
+function trimTo(s, max) {
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${cut.slice(0, lastSpace > 40 ? lastSpace : max).trim()}…`;
 }
 
 // --- Fetch + cache ----------------------------------------------------------
@@ -212,7 +278,7 @@ async function fetchCompetitor(c) {
               : [r.description].filter(Boolean));
             return {
               title: r.title || "(untitled)",
-              snippet: pickSnippet(snippets, c.match),
+              snippet: trimTo(pickSnippet(snippets, c.match), 160),
               matchText: snippets.join(" "), // all snippets, for mention check
               source: s.label,
               host: hostOf(r.url),
@@ -248,7 +314,10 @@ async function fetchCompetitor(c) {
     results: topResults,
     sampleSize: merged.length,
     sources: SOURCES.map((s, i) => ({ label: s.label, count: perSource[i].length })),
-    sentiment: summarizeSentiment(merged),
+    sentiment: {
+      ...summarizeSentiment(merged),
+      bullets: topSentiments(merged, c.match, otherMatchTerms(c.id)),
+    },
     fetchedAt: new Date().toISOString(),
   };
 }

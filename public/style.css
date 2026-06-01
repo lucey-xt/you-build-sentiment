@@ -160,6 +160,44 @@ main {
   margin: 6px 0 14px;
 }
 
+.summary-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 8px 0 6px;
+}
+
+.summary {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.summary li {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text);
+  display: flex;
+  gap: 7px;
+  align-items: baseline;
+}
+
+.summary .mark {
+  font-weight: 700;
+  flex-shrink: 0;
+  width: 12px;
+  text-align: center;
+}
+
+.summary .b-pos .mark { color: var(--pos); }
+.summary .b-neg .mark { color: var(--neg); }
+.summary .b-mixed .mark { color: var(--mixed); }
+
 .sources {
   display: flex;
   gap: 6px;
@@ -201,6 +239,12 @@ main {
   font-size: 13px;
   color: var(--text);
   margin: 3px 0;
+  /* Clamp to the 2 most relevant lines */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .result .source {

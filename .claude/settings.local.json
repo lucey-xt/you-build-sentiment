@@ -29,7 +29,9 @@
       "Bash(git remote *)",
       "Bash(git push *)",
       "Read(//Users/christinalucey/.ssh/**)",
-      "Bash(command -v gh)"
+      "Bash(command -v gh)",
+      "Bash(curl -s -m 5 -o /dev/null -w 'index:%{http_code} ' http://localhost:3000/)",
+      "Bash(curl -s -m 5 -o /dev/null -w 'css:%{http_code}\\\\n' http://localhost:3000/style.css)"
     ]
   }
 }
