@@ -1,0 +1,13 @@
+{
+  "name": "web-context-sentiment-dashboard",
+  "version": "1.0.0",
+  "description": "Tracks developer sentiment about providing web context to LLMs, by competitor.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
