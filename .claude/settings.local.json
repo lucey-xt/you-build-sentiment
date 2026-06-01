@@ -24,7 +24,12 @@
       "Bash(gh auth *)",
       "Bash(git add *)",
       "Bash(git check-ignore *)",
-      "Bash(git -c 'user.name=Christina Lucey' -c user.email=christina.lucey@you.com commit -q -m 'Initial commit: web-context-for-LLMs developer sentiment dashboard *)"
+      "Bash(git -c 'user.name=Christina Lucey' -c user.email=christina.lucey@you.com commit -q -m 'Initial commit: web-context-for-LLMs developer sentiment dashboard *)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Read(//Users/christinalucey/.ssh/**)",
+      "Bash(command -v gh)"
     ]
   }
 }
