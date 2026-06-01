@@ -1,4 +1,5 @@
 const grid = document.getElementById("grid");
+const sowhatEl = document.getElementById("sowhat");
 const refreshBtn = document.getElementById("refresh");
 const metaEl = document.getElementById("meta");
 
@@ -22,12 +23,53 @@ function fmtTime(iso) {
   });
 }
 
+function fmtDate(iso) {
+  if (!iso) return "date n/a";
+  const d = new Date(iso);
+  if (isNaN(d)) return "date n/a";
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+// Escape, then render **bold** spans (the only markup used in takeaways).
+function fmtRich(s) {
+  return esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+const SOWHAT_SECTIONS = [
+  { key: "product", label: "Product", icon: "◆" },
+  { key: "marketing", label: "Marketing", icon: "◇" },
+  { key: "engineering", label: "Engineering", icon: "▣" },
+];
+
+function renderInsights(insights) {
+  if (!insights) {
+    sowhatEl.innerHTML = "";
+    return;
+  }
+  const cards = SOWHAT_SECTIONS.map((sec) => {
+    const items = insights[sec.key] || [];
+    const lis = items.map((t) => `<li>${fmtRich(t)}</li>`).join("");
+    return `
+      <div class="sowhat-card ${sec.key}">
+        <div class="sowhat-head"><span class="sowhat-icon">${sec.icon}</span>${sec.label}</div>
+        <ul>${lis || '<li class="muted">No clear signal yet.</li>'}</ul>
+      </div>`;
+  }).join("");
+
+  sowhatEl.innerHTML = `
+    <div class="sowhat-title">
+      <h2>So what?</h2>
+      <span class="sowhat-sub">Cross-product takeaways from ${insights.meta?.totalMentions ?? 0} developer mentions</span>
+    </div>
+    <div class="sowhat-grid">${cards}</div>`;
+}
+
 function renderResult(r) {
   return `
     <li class="result">
       <a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a>
       <p class="snippet">${esc(r.snippet)}</p>
-      <span class="source">${esc(r.source || "unknown source")}</span>
+      <span class="source">${esc(r.source || "unknown source")} · ${esc(fmtDate(r.pageAge))}</span>
     </li>`;
 }
 
@@ -97,8 +139,10 @@ async function load({ refresh = false } = {}) {
     if (!res.ok) throw new Error(`Server returned ${res.status}`);
     const data = await res.json();
 
+    renderInsights(data.insights);
     grid.innerHTML = data.columns.map(renderCard).join("");
-    metaEl.textContent = `${data.columns.length} sources · ${data.ttlMinutes}-min cache · updated ${fmtTime(
+    const windowNote = data.windowMonths ? `last ${data.windowMonths} months · ` : "";
+    metaEl.textContent = `${windowNote}${data.columns.length} products · ${data.ttlMinutes}-min cache · updated ${fmtTime(
       data.generatedAt
     )}`;
   } catch (err) {

@@ -100,6 +100,105 @@ main {
   padding: 24px 28px 56px;
 }
 
+/* --- So what? section --- */
+.sowhat {
+  margin-bottom: 28px;
+}
+
+.sowhat:empty {
+  display: none;
+}
+
+.sowhat-title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.sowhat-title h2 {
+  margin: 0;
+  font-size: 20px;
+  color: var(--accent);
+}
+
+.sowhat-sub {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.sowhat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.sowhat-card {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 6px 18px rgba(40, 50, 110, 0.18);
+}
+
+/* Subtle tonal variation per function */
+.sowhat-card.marketing {
+  background: #4456d6;
+}
+.sowhat-card.engineering {
+  background: #3b4bc0;
+}
+
+.sowhat-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.sowhat-icon {
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.sowhat-card ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sowhat-card li {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.sowhat-card li.muted {
+  opacity: 0.7;
+  list-style: none;
+  margin-left: -18px;
+}
+
+.sowhat-card strong {
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.5);
+  text-underline-offset: 2px;
+}
+
+.grid-title {
+  font-size: 16px;
+  color: var(--text);
+  margin: 0 0 14px;
+  opacity: 0.75;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
